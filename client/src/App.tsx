@@ -3,6 +3,7 @@ import { Toaster } from 'react-hot-toast';
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster as UIToaster } from "@/components/ui/toaster";
+import { Sonner } from "@/components/ui/sonner";
 
 import Home from '@/pages/Home';
 import Login from '@/pages/Login';
@@ -30,6 +31,7 @@ function App() {
       <TooltipProvider>
         <UIToaster />
         <Toaster position="top-center" />
+        <Sonner />
         <Router>
           <Routes>
             <Route element={<Layout />}>

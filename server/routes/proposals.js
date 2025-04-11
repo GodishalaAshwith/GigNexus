@@ -128,4 +128,16 @@ router.patch('/:id/status', auth, async (req, res) => {
   }
 });
 
+// Get my proposals (for freelancers)
+router.get('/my', auth, async (req, res) => {
+  try {
+    const proposals = await Proposal.find({ freelancerId: req.user.id })
+      .populate('jobId')
+      .sort('-createdAt');
+    res.json(proposals);
+  } catch (err) {
+    res.status(500).send('Server Error');
+  }
+});
+
 module.exports = router;

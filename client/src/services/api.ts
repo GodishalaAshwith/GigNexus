@@ -65,6 +65,20 @@ export const authService = {
       throw error;
     }
   },
+
+  updateProfile: async (profileData: any) => {
+    try {
+      const response = await api.put('/users/profile', profileData, {
+        headers: {
+          'x-auth-token': localStorage.getItem('token')
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Update profile error:', error);
+      throw error;
+    }
+  }
 };
 
 // Job services
@@ -144,6 +158,7 @@ export const jobService = {
 
 // Proposal services
 export const proposalService = {
+  // Submit a new proposal
   submitProposal: async (proposalData: any) => {
     try {
       const response = await api.post('/proposals', proposalData);
@@ -154,6 +169,7 @@ export const proposalService = {
     }
   },
 
+  // Get proposals for a specific job
   getProposalsForJob: async (jobId: string) => {
     try {
       const response = await api.get(`/proposals/job/${jobId}`);
@@ -164,6 +180,7 @@ export const proposalService = {
     }
   },
 
+  // Get all proposals submitted by the current freelancer
   getMyProposals: async () => {
     try {
       const response = await api.get('/proposals/me');
@@ -173,20 +190,31 @@ export const proposalService = {
       throw error;
     }
   },
+  
+  // Get all proposals received by the current business
+  getReceivedProposals: async () => {
+    try {
+      const response = await api.get('/proposals/received');
+      return response.data;
+    } catch (error) {
+      console.error('Get received proposals error:', error);
+      throw error;
+    }
+  },
 
   updateProposalStatus: async (id: string, status: string) => {
     try {
-      const response = await api.patch(`/proposals/${id}/status`, { status });
+      const response = await api.put(`/proposals/${id}/status`, { status });
       return response.data;
     } catch (error) {
-      console.error('Update proposal error:', error);
+      console.error('Update proposal status error:', error);
       throw error;
     }
   },
 
   withdrawProposal: async (id: string) => {
     try {
-      const response = await api.delete(`/proposals/${id}`);
+      const response = await api.put(`/proposals/${id}/withdraw`);
       return response.data;
     } catch (error) {
       console.error('Withdraw proposal error:', error);
