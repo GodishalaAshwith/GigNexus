@@ -1,11 +1,27 @@
-
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Search, Filter, Star, MapPin } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import Loading from "@/components/ui/loading";
+import { toast } from "react-hot-toast";
+import axios from "axios";
 
-const mockFreelancers = [
+interface Freelancer {
+  id: string;
+  name: string;
+  title: string;
+  rating: number;
+  hourlyRate: string;
+  location: string;
+  skills: string[];
+  profileImage?: string;
+  overview: string;
+}
+
+// Fallback data in case API is not available
+const fallbackFreelancers = [
   {
-    id: 1,
+    id: "1",
     name: "Alex Johnson",
     title: "Senior Full-Stack Developer",
     rating: 4.9,
@@ -16,7 +32,7 @@ const mockFreelancers = [
     overview: "Full-stack developer with 8+ years of experience building scalable web applications. Specialized in React ecosystem and cloud architecture."
   },
   {
-    id: 2,
+    id: "2",
     name: "Sarah Williams",
     title: "Frontend Engineer & UI Specialist",
     rating: 4.8,
@@ -27,7 +43,7 @@ const mockFreelancers = [
     overview: "Frontend developer focused on creating pixel-perfect, responsive UIs with modern frameworks. Strong background in design systems and animations."
   },
   {
-    id: 3,
+    id: "3",
     name: "Michael Chen",
     title: "Backend Developer & DevOps Engineer",
     rating: 4.7,
@@ -36,46 +52,59 @@ const mockFreelancers = [
     skills: ["Python", "Django", "Docker", "Kubernetes", "PostgreSQL"],
     profileImage: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=256&h=256&fit=crop",
     overview: "Expert in building robust backend services and implementing DevOps practices. Strong focus on performance optimization and security."
-  },
-  {
-    id: 4,
-    name: "Emily Rodriguez",
-    title: "Mobile Application Developer",
-    rating: 4.9,
-    hourlyRate: "$90/hr",
-    location: "Barcelona, Spain",
-    skills: ["React Native", "iOS", "Android", "Firebase", "GraphQL"],
-    profileImage: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=256&h=256&fit=crop",
-    overview: "Experienced mobile developer who has published over 15 apps to the App Store and Google Play. Expertise in cross-platform development and native integrations."
-  },
-  {
-    id: 5,
-    name: "David Kim",
-    title: "Data Engineer & ML Specialist",
-    rating: 4.8,
-    hourlyRate: "$95/hr",
-    location: "Seoul, South Korea",
-    skills: ["Python", "TensorFlow", "Spark", "SQL", "AWS"],
-    profileImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=256&h=256&fit=crop",
-    overview: "Data engineer with a focus on building ML pipelines and implementing data-driven solutions. Experience with large-scale data processing and analytics."
   }
 ];
 
 const Freelancers = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [skillFilter, setSkillFilter] = useState("");
-  const [filteredFreelancers, setFilteredFreelancers] = useState(mockFreelancers);
+  const [freelancers, setFreelancers] = useState<Freelancer[]>([]);
+  const [filteredFreelancers, setFilteredFreelancers] = useState<Freelancer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { isAuthenticated, user } = useAuth();
+
+  useEffect(() => {
+    const fetchFreelancers = async () => {
+      try {
+        setLoading(true);
+        // Try to fetch freelancers from API
+        const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/users/freelancers`);
+        
+        if (response.data && Array.isArray(response.data)) {
+          setFreelancers(response.data);
+          setFilteredFreelancers(response.data);
+        } else {
+          // If API response is not as expected, use fallback data
+          console.warn("API response format unexpected, using fallback data");
+          setFreelancers(fallbackFreelancers);
+          setFilteredFreelancers(fallbackFreelancers);
+        }
+      } catch (error) {
+        console.error("Error fetching freelancers:", error);
+        toast.error("Failed to load freelancers. Using sample data instead.");
+        // Use fallback data if API call fails
+        setFreelancers(fallbackFreelancers);
+        setFilteredFreelancers(fallbackFreelancers);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFreelancers();
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    filterFreelancers();
+    filterFreelancersData();
   };
 
-  const filterFreelancers = () => {
-    const filtered = mockFreelancers.filter((freelancer) => {
+  const filterFreelancersData = () => {
+    const filtered = freelancers.filter((freelancer) => {
       const matchesSearch =
+        searchTerm === "" ||
         freelancer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        freelancer.title.toLowerCase().includes(searchTerm.toLowerCase());
+        freelancer.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        freelancer.overview.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesSkill =
         skillFilter === "" ||
@@ -89,10 +118,14 @@ const Freelancers = () => {
     setFilteredFreelancers(filtered);
   };
 
+  if (loading) {
+    return <Loading size="lg" text="Loading freelancers..." fullScreen />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="container-custom">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Find Expert Developers</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">Find Expert Freelancers</h1>
 
         <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
           <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
@@ -100,8 +133,8 @@ const Freelancers = () => {
               <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search by name or title"
-                className="input-field pl-10"
+                placeholder="Search by name, title, or description"
+                className="w-full px-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -110,7 +143,7 @@ const Freelancers = () => {
               <input
                 type="text"
                 placeholder="Filter by skill"
-                className="input-field"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 value={skillFilter}
                 onChange={(e) => setSkillFilter(e.target.value)}
               />
@@ -128,7 +161,7 @@ const Freelancers = () => {
                 <div className="flex flex-col md:flex-row">
                   <div className="md:w-1/4 mb-4 md:mb-0 flex justify-center md:justify-start">
                     <img
-                      src={freelancer.profileImage}
+                      src={freelancer.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(freelancer.name)}&background=random`}
                       alt={freelancer.name}
                       className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover"
                     />

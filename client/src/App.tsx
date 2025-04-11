@@ -1,41 +1,42 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Toaster as HotToaster } from "react-hot-toast";
-import Home from "@/pages/Home";
-import Jobs from "@/pages/Jobs";
-import Freelancers from "@/pages/Freelancers";
-import Login from "@/pages/Login";
-import Signup from "@/pages/Signup";
-import Dashboard from "@/pages/Dashboard";
-import NotFound from "@/pages/NotFound";
-import Unauthorized from "@/pages/Unauthorized";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { Toaster as UIToaster } from "@/components/ui/toaster";
+
+import Home from '@/pages/Home';
+import Login from '@/pages/Login';
+import Signup from '@/pages/Signup';
+import Dashboard from '@/pages/Dashboard';
+import Jobs from '@/pages/Jobs';
+import JobDetail from '@/pages/JobDetail';
+import CreateJob from '@/pages/CreateJob';
+import MyJobs from '@/pages/MyJobs';
+import Profile from '@/pages/Profile';
+import Freelancers from '@/pages/Freelancers';
+import Proposals from '@/pages/Proposals';
+import NotFound from '@/pages/NotFound';
+import Unauthorized from '@/pages/Unauthorized';
 import HowItWorksFreelancer from "@/pages/HowItWorksFreelancer";
 import HowItWorksBusiness from "@/pages/HowItWorksBusiness";
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import Layout from '@/components/Layout';
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <HotToaster position="top-center" />
-      <BrowserRouter>
-        <div className="flex flex-col min-h-screen">
-          <Navbar />
-          <div className="flex-grow">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/jobs" element={<Jobs />} />
-              <Route path="/freelancers" element={<Freelancers />} />
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <UIToaster />
+        <Toaster position="top-center" />
+        <Router>
+          <Routes>
+            <Route element={<Layout />}>
+              {/* Public routes */}
+              <Route index element={<Home />} />
               <Route 
-                path="/login" 
+                path="login" 
                 element={
                   <ProtectedRoute requireAuth={false} redirectPath="/dashboard">
                     <Login />
@@ -43,32 +44,74 @@ const App = () => (
                 } 
               />
               <Route 
-                path="/signup" 
+                path="signup" 
                 element={
                   <ProtectedRoute requireAuth={false} redirectPath="/dashboard">
                     <Signup />
                   </ProtectedRoute>
                 } 
               />
+              <Route path="jobs" element={<Jobs />} />
+              <Route path="job/:jobId" element={<JobDetail />} />
+              <Route path="freelancers" element={<Freelancers />} />
+              <Route path="unauthorized" element={<Unauthorized />} />
+              <Route path="how-it-works/freelancer" element={<HowItWorksFreelancer />} />
+              <Route path="how-it-works/business" element={<HowItWorksBusiness />} />
+
+              {/* Protected routes for all authenticated users */}
               <Route 
-                path="/dashboard" 
+                path="dashboard" 
                 element={
                   <ProtectedRoute>
                     <Dashboard />
                   </ProtectedRoute>
                 } 
               />
-              <Route path="/unauthorized" element={<Unauthorized />} />
-              <Route path="/how-it-works/freelancer" element={<HowItWorksFreelancer />} />
-              <Route path="/how-it-works/business" element={<HowItWorksBusiness />} />
+              <Route 
+                path="profile" 
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                } 
+              />
+
+              {/* Protected routes for businesses */}
+              <Route 
+                path="create-job" 
+                element={
+                  <ProtectedRoute allowedRoles={['business']}>
+                    <CreateJob />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="my-jobs" 
+                element={
+                  <ProtectedRoute allowedRoles={['business']}>
+                    <MyJobs />
+                  </ProtectedRoute>
+                } 
+              />
+
+              {/* Protected routes for freelancers */}
+              <Route 
+                path="proposals" 
+                element={
+                  <ProtectedRoute allowedRoles={['freelancer']}>
+                    <Proposals />
+                  </ProtectedRoute>
+                } 
+              />
+
+              {/* 404 route */}
               <Route path="*" element={<NotFound />} />
-            </Routes>
-          </div>
-          <Footer />
-        </div>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+            </Route>
+          </Routes>
+        </Router>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;

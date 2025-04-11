@@ -93,8 +93,50 @@ export const jobService = {
     try {
       const response = await api.post('/jobs', jobData);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Create job error:', error);
+      
+      // Extract more detailed error message if available
+      if (error.response && error.response.data) {
+        if (error.response.data.errors && Array.isArray(error.response.data.errors)) {
+          // Handle express-validator errors
+          const errorMessages = error.response.data.errors.map((err: any) => err.msg).join(', ');
+          throw new Error(`Validation error: ${errorMessages}`);
+        } else if (error.response.data.msg) {
+          throw new Error(error.response.data.msg);
+        }
+      }
+      
+      throw error;
+    }
+  },
+
+  getBusinessJobs: async () => {
+    try {
+      const response = await api.get('/jobs/business');
+      return response.data;
+    } catch (error) {
+      console.error('Get business jobs error:', error);
+      throw error;
+    }
+  },
+
+  updateJob: async (id: string, jobData: any) => {
+    try {
+      const response = await api.put(`/jobs/${id}`, jobData);
+      return response.data;
+    } catch (error) {
+      console.error('Update job error:', error);
+      throw error;
+    }
+  },
+
+  deleteJob: async (id: string) => {
+    try {
+      const response = await api.delete(`/jobs/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Delete job error:', error);
       throw error;
     }
   },
@@ -122,12 +164,32 @@ export const proposalService = {
     }
   },
 
+  getMyProposals: async () => {
+    try {
+      const response = await api.get('/proposals/me');
+      return response.data;
+    } catch (error) {
+      console.error('Get my proposals error:', error);
+      throw error;
+    }
+  },
+
   updateProposalStatus: async (id: string, status: string) => {
     try {
       const response = await api.patch(`/proposals/${id}/status`, { status });
       return response.data;
     } catch (error) {
       console.error('Update proposal error:', error);
+      throw error;
+    }
+  },
+
+  withdrawProposal: async (id: string) => {
+    try {
+      const response = await api.delete(`/proposals/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Withdraw proposal error:', error);
       throw error;
     }
   },

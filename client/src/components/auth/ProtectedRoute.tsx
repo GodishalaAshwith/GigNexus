@@ -1,6 +1,8 @@
-import { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import { ReactNode, useEffect } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import Loading from '@/components/ui/loading';
+import { toast } from 'react-hot-toast';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -23,10 +25,18 @@ export const ProtectedRoute = ({
   redirectPath = '/',
 }: ProtectedRouteProps) => {
   const { user, isAuthenticated, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // If route requires specific roles and user doesn't have them, show toast message
+    if (!loading && isAuthenticated && allowedRoles.length > 0 && user && !allowedRoles.includes(user.role)) {
+      toast.error(`Access denied. This page is only for ${allowedRoles.join(' or ')} accounts.`);
+    }
+  }, [loading, isAuthenticated, user, allowedRoles]);
 
   // Show loading state if still checking authentication
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    return <Loading size="lg" text="Checking authentication..." fullScreen />;
   }
 
   // If route requires authentication and user is not authenticated

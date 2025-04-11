@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, ChevronDown, User } from "lucide-react";
+import { Menu, X, ChevronDown, User, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MindlancerLogo } from "./MindlancerLogo";
 import { useAuth } from "@/hooks/useAuth";
@@ -47,15 +47,39 @@ const Navbar = () => {
           </div>
 
           <nav className="hidden md:flex items-center space-x-8">
-            {/* Show Jobs link for everyone */}
-            <Link to="/jobs" className="text-gray-700 font-medium hover:text-primary-600 transition-colors">
-              Find Jobs
-            </Link>
+            {/* Show Jobs link only for freelancers or unauthenticated users */}
+            {(!isAuthenticated || user?.role === "freelancer") && (
+              <Link to="/jobs" className="text-gray-700 font-medium hover:text-primary-600 transition-colors">
+                Find Jobs
+              </Link>
+            )}
+            
+            {/* Show My Job Postings link only for business users */}
+            {isAuthenticated && user?.role === "business" && (
+              <>
+                <Link to="/my-jobs" className="text-gray-700 font-medium hover:text-primary-600 transition-colors">
+                  My Job Postings
+                </Link>
+                <Link to="/create-job" className="text-gray-700 font-medium hover:text-primary-600 transition-colors">
+                  <span className="flex items-center">
+                    <PlusCircle className="mr-1 h-4 w-4" />
+                    Post a Job
+                  </span>
+                </Link>
+              </>
+            )}
             
             {/* Show Freelancers link only for businesses or unauthenticated users */}
             {(!isAuthenticated || user?.role === "business") && (
               <Link to="/freelancers" className="text-gray-700 font-medium hover:text-primary-600 transition-colors">
                 Find Freelancers
+              </Link>
+            )}
+            
+            {/* Show Proposals link only for freelancers */}
+            {isAuthenticated && user?.role === "freelancer" && (
+              <Link to="/proposals" className="text-gray-700 font-medium hover:text-primary-600 transition-colors">
+                My Proposals
               </Link>
             )}
             
@@ -113,7 +137,10 @@ const Navbar = () => {
                   {user?.role === "freelancer" ? (
                     <DropdownMenuItem onClick={() => navigate("/proposals")}>My Proposals</DropdownMenuItem>
                   ) : (
-                    <DropdownMenuItem onClick={() => navigate("/my-jobs")}>My Job Posts</DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem onClick={() => navigate("/my-jobs")}>My Job Posts</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate("/create-job")}>Post a Job</DropdownMenuItem>
+                    </>
                   )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
@@ -148,13 +175,39 @@ const Navbar = () => {
       {isMenuOpen && (
         <div className="md:hidden bg-white border-t border-gray-100 py-4">
           <div className="container-custom space-y-4">
-            <Link
-              to="/jobs"
-              className="block text-gray-700 font-medium hover:text-primary-600 transition-colors"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Find Jobs
-            </Link>
+            {/* Show Jobs link only for freelancers or unauthenticated users */}
+            {(!isAuthenticated || user?.role === "freelancer") && (
+              <Link
+                to="/jobs"
+                className="block text-gray-700 font-medium hover:text-primary-600 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Find Jobs
+              </Link>
+            )}
+            
+            {/* Show My Job Postings link only for business users */}
+            {isAuthenticated && user?.role === "business" && (
+              <>
+                <Link
+                  to="/my-jobs"
+                  className="block text-gray-700 font-medium hover:text-primary-600 transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  My Job Postings
+                </Link>
+                <Link
+                  to="/create-job"
+                  className="block text-gray-700 font-medium hover:text-primary-600 transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <span className="flex items-center">
+                    <PlusCircle className="mr-1 h-4 w-4" />
+                    Post a Job
+                  </span>
+                </Link>
+              </>
+            )}
             
             {/* Show Freelancers link only for businesses or unauthenticated users */}
             {(!isAuthenticated || user?.role === "business") && (
@@ -164,6 +217,17 @@ const Navbar = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Find Freelancers
+              </Link>
+            )}
+            
+            {/* Show Proposals link only for freelancers */}
+            {isAuthenticated && user?.role === "freelancer" && (
+              <Link
+                to="/proposals"
+                className="block text-gray-700 font-medium hover:text-primary-600 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                My Proposals
               </Link>
             )}
             
@@ -201,14 +265,7 @@ const Navbar = () => {
             </div>
             
             {isAuthenticated ? (
-              <div className="pt-4 flex flex-col space-y-3">
-                <Link
-                  to="/dashboard"
-                  className="block text-gray-700 font-medium hover:text-primary-600 transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Dashboard
-                </Link>
+              <>
                 <Link
                   to="/profile"
                   className="block text-gray-700 font-medium hover:text-primary-600 transition-colors"
@@ -216,48 +273,40 @@ const Navbar = () => {
                 >
                   Profile
                 </Link>
-                {user?.role === "freelancer" ? (
-                  <Link
-                    to="/proposals"
-                    className="block text-gray-700 font-medium hover:text-primary-600 transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    My Proposals
-                  </Link>
-                ) : (
-                  <Link
-                    to="/my-jobs"
-                    className="block text-gray-700 font-medium hover:text-primary-600 transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    My Job Posts
-                  </Link>
-                )}
+                <Link
+                  to="/dashboard"
+                  className="block text-gray-700 font-medium hover:text-primary-600 transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
                 <button
                   onClick={() => {
                     handleLogout();
                     setIsMenuOpen(false);
                   }}
-                  className="block text-center py-2 px-4 bg-primary text-white rounded-md font-medium hover:bg-primary-600 transition-colors"
+                  className="block text-red-600 font-medium hover:text-red-700 transition-colors"
                 >
                   Logout
                 </button>
-              </div>
+              </>
             ) : (
-              <div className="pt-4 flex flex-col space-y-3">
+              <div className="flex space-x-4 pt-2">
                 <Link
                   to="/login"
-                  className="block text-center py-2 px-4 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                  className="block"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Log In
+                  <Button variant="outline" className="w-full font-medium">
+                    Log In
+                  </Button>
                 </Link>
                 <Link
                   to="/signup"
-                  className="block text-center py-2 px-4 bg-primary text-white rounded-md font-medium hover:bg-primary-600 transition-colors"
+                  className="block"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Sign Up
+                  <Button className="w-full font-medium">Sign Up</Button>
                 </Link>
               </div>
             )}
