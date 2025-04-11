@@ -68,35 +68,53 @@ router.post('/login', [
 
   try {
     const { email, password } = req.body;
+    console.log('Login attempt for:', email);
+    
     const user = await User.findOne({ email });
 
     if (!user) {
+      console.log('User not found:', email);
       return res.status(400).json({ msg: 'Invalid credentials' });
     }
 
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(400).json({ msg: 'Invalid credentials' });
+    // Check if user has a password (might be OAuth user)
+    if (!user.password) {
+      console.log('User has no password (OAuth user):', email);
+      return res.status(400).json({ msg: 'Please use OAuth login for this account' });
     }
 
-    const payload = {
-      user: {
-        id: user.id,
-        role: user.role
+    try {
+      const isMatch = await user.comparePassword(password);
+      if (!isMatch) {
+        console.log('Password mismatch for:', email);
+        return res.status(400).json({ msg: 'Invalid credentials' });
       }
-    };
 
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' },
-      (err, token) => {
-        if (err) throw err;
-        res.json({ token });
-      }
-    );
+      const payload = {
+        user: {
+          id: user.id,
+          role: user.role
+        }
+      };
+
+      jwt.sign(
+        payload,
+        process.env.JWT_SECRET,
+        { expiresIn: '24h' },
+        (err, token) => {
+          if (err) {
+            console.error('JWT sign error:', err);
+            throw err;
+          }
+          res.json({ token });
+        }
+      );
+    } catch (pwError) {
+      console.error('Password comparison error:', pwError);
+      res.status(500).json({ msg: 'Authentication error' });
+    }
   } catch (err) {
-    console.error(err.message);
+    console.error('Login error:', err.message);
     res.status(500).send('Server error');
   }
 });
