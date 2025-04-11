@@ -10,6 +10,7 @@ import Signup from '@/pages/Signup';
 import Dashboard from '@/pages/Dashboard';
 import Jobs from '@/pages/Jobs';
 import JobDetail from '@/pages/JobDetail';
+import FreelancerDetail from '@/pages/FreelancerDetail';
 import CreateJob from '@/pages/CreateJob';
 import MyJobs from '@/pages/MyJobs';
 import Profile from '@/pages/Profile';
@@ -54,6 +55,7 @@ function App() {
               <Route path="jobs" element={<Jobs />} />
               <Route path="job/:jobId" element={<JobDetail />} />
               <Route path="freelancers" element={<Freelancers />} />
+              <Route path="freelancer/:freelancerId" element={<FreelancerDetail />} />
               <Route path="unauthorized" element={<Unauthorized />} />
               <Route path="how-it-works/freelancer" element={<HowItWorksFreelancer />} />
               <Route path="how-it-works/business" element={<HowItWorksBusiness />} />

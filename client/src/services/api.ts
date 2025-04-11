@@ -144,6 +144,7 @@ export const jobService = {
 
 // Proposal services
 export const proposalService = {
+  // Submit a new proposal
   submitProposal: async (proposalData: any) => {
     try {
       const response = await api.post('/proposals', proposalData);
@@ -154,6 +155,7 @@ export const proposalService = {
     }
   },
 
+  // Get proposals for a specific job
   getProposalsForJob: async (jobId: string) => {
     try {
       const response = await api.get(`/proposals/job/${jobId}`);
@@ -164,9 +166,10 @@ export const proposalService = {
     }
   },
 
+  // Get all proposals submitted by the current freelancer
   getMyProposals: async () => {
     try {
-      const response = await api.get('/proposals/me');
+      const response = await api.get('/proposals/my');
       return response.data;
     } catch (error) {
       console.error('Get my proposals error:', error);
@@ -174,6 +177,7 @@ export const proposalService = {
     }
   },
 
+  // Update proposal status
   updateProposalStatus: async (id: string, status: string) => {
     try {
       const response = await api.patch(`/proposals/${id}/status`, { status });
@@ -184,6 +188,7 @@ export const proposalService = {
     }
   },
 
+  // Withdraw proposal
   withdrawProposal: async (id: string) => {
     try {
       const response = await api.delete(`/proposals/${id}`);
@@ -193,6 +198,49 @@ export const proposalService = {
       throw error;
     }
   },
+};
+
+// Freelancer services
+export const freelancerService = {
+  getAllFreelancers: async (filters = {}) => {
+    try {
+      const response = await api.get('/users/freelancers', { params: filters });
+      return response.data;
+    } catch (error) {
+      console.error('Get freelancers error:', error);
+      throw error;
+    }
+  },
+
+  getFreelancerById: async (id: string) => {
+    try {
+      const response = await api.get(`/users/freelancers/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get freelancer error:', error);
+      throw error;
+    }
+  },
+
+  updateFreelancerProfile: async (id: string, profileData: any) => {
+    try {
+      const response = await api.put(`/users/freelancers/${id}`, profileData);
+      return response.data;
+    } catch (error) {
+      console.error('Update freelancer error:', error);
+      throw error;
+    }
+  },
+
+  hireFreelancer: async (freelancerId: string, jobId: string) => {
+    try {
+      const response = await api.post(`/users/freelancers/${freelancerId}/hire`, { jobId });
+      return response.data;
+    } catch (error) {
+      console.error('Hire freelancer error:', error);
+      throw error;
+    }
+  }
 };
 
 export default api;

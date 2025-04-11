@@ -4,9 +4,38 @@ import { Search, Filter, Star, MapPin } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import Loading from "@/components/ui/loading";
 import { toast } from "react-hot-toast";
-import axios from "axios";
+import { Link, useNavigate } from "react-router-dom";
+import { freelancerService } from "@/services/api";
+
+interface FreelancerProfile {
+  name: string;
+  avatar?: string;
+  location: string;
+  bio: string;
+  skills: string[];
+  hourlyRate: number;
+  portfolio: Array<{
+    title: string;
+    description: string;
+    link: string;
+  }>;
+  certifications: Array<{
+    name: string;
+    issuer: string;
+    year: number;
+  }>;
+}
 
 interface Freelancer {
+  _id: string;
+  email: string;
+  role: string;
+  profile: FreelancerProfile;
+  isVerified: boolean;
+  createdAt: string;
+}
+
+interface FreelancerDisplay {
   id: string;
   name: string;
   title: string;
@@ -18,73 +47,58 @@ interface Freelancer {
   overview: string;
 }
 
-// Fallback data in case API is not available
-const fallbackFreelancers = [
-  {
-    id: "1",
-    name: "Alex Johnson",
-    title: "Senior Full-Stack Developer",
-    rating: 4.9,
-    hourlyRate: "$85/hr",
-    location: "San Francisco, CA",
-    skills: ["React", "Node.js", "TypeScript", "MongoDB", "AWS"],
-    profileImage: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=256&h=256&fit=crop",
-    overview: "Full-stack developer with 8+ years of experience building scalable web applications. Specialized in React ecosystem and cloud architecture."
-  },
-  {
-    id: "2",
-    name: "Sarah Williams",
-    title: "Frontend Engineer & UI Specialist",
-    rating: 4.8,
-    hourlyRate: "$75/hr",
-    location: "London, UK",
-    skills: ["React", "Vue.js", "CSS/SCSS", "UI Design", "Figma"],
-    profileImage: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=256&h=256&fit=crop",
-    overview: "Frontend developer focused on creating pixel-perfect, responsive UIs with modern frameworks. Strong background in design systems and animations."
-  },
-  {
-    id: "3",
-    name: "Michael Chen",
-    title: "Backend Developer & DevOps Engineer",
-    rating: 4.7,
-    hourlyRate: "$80/hr",
-    location: "Toronto, Canada",
-    skills: ["Python", "Django", "Docker", "Kubernetes", "PostgreSQL"],
-    profileImage: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=256&h=256&fit=crop",
-    overview: "Expert in building robust backend services and implementing DevOps practices. Strong focus on performance optimization and security."
-  }
-];
-
 const Freelancers = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [skillFilter, setSkillFilter] = useState("");
-  const [freelancers, setFreelancers] = useState<Freelancer[]>([]);
-  const [filteredFreelancers, setFilteredFreelancers] = useState<Freelancer[]>([]);
+  const [freelancers, setFreelancers] = useState<FreelancerDisplay[]>([]);
+  const [filteredFreelancers, setFilteredFreelancers] = useState<FreelancerDisplay[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
+
+  const transformFreelancer = (freelancer: Freelancer): FreelancerDisplay => {
+    return {
+      id: freelancer._id,
+      name: freelancer.profile.name || 'Anonymous Freelancer',
+      title: freelancer.profile.bio?.split('\n')[0] || 'Freelancer',
+      rating: 5, // We'll implement this later
+      hourlyRate: `$${freelancer.profile.hourlyRate || 0}/hr`,
+      location: freelancer.profile.location || 'Remote',
+      skills: freelancer.profile.skills || [],
+      profileImage: freelancer.profile.avatar,
+      overview: freelancer.profile.bio || 'No bio provided'
+    };
+  };
 
   useEffect(() => {
     const fetchFreelancers = async () => {
       try {
         setLoading(true);
-        // Try to fetch freelancers from API
-        const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/users/freelancers`);
+        setError(null);
+        const response = await freelancerService.getAllFreelancers();
         
-        if (response.data && Array.isArray(response.data)) {
-          setFreelancers(response.data);
-          setFilteredFreelancers(response.data);
-        } else {
-          // If API response is not as expected, use fallback data
-          console.warn("API response format unexpected, using fallback data");
-          setFreelancers(fallbackFreelancers);
-          setFilteredFreelancers(fallbackFreelancers);
-        }
+        // Ensure response is an array
+        const data = Array.isArray(response) ? response : [];
+        
+        // Transform and validate the data
+        const transformedFreelancers = data
+          .filter(freelancer => 
+            freelancer && 
+            freelancer._id && 
+            freelancer.profile &&
+            freelancer.profile.name
+          )
+          .map(transformFreelancer);
+
+        setFreelancers(transformedFreelancers);
+        setFilteredFreelancers(transformedFreelancers);
       } catch (error) {
         console.error("Error fetching freelancers:", error);
-        toast.error("Failed to load freelancers. Using sample data instead.");
-        // Use fallback data if API call fails
-        setFreelancers(fallbackFreelancers);
-        setFilteredFreelancers(fallbackFreelancers);
+        setError("Failed to load freelancers. Please try again later.");
+        toast.error("Failed to load freelancers");
+        setFreelancers([]);
+        setFilteredFreelancers([]);
       } finally {
         setLoading(false);
       }
@@ -99,6 +113,11 @@ const Freelancers = () => {
   };
 
   const filterFreelancersData = () => {
+    if (!Array.isArray(freelancers)) {
+      setFilteredFreelancers([]);
+      return;
+    }
+
     const filtered = freelancers.filter((freelancer) => {
       const matchesSearch =
         searchTerm === "" ||
@@ -108,9 +127,10 @@ const Freelancers = () => {
 
       const matchesSkill =
         skillFilter === "" ||
-        freelancer.skills.some((skill) =>
-          skill.toLowerCase().includes(skillFilter.toLowerCase())
-        );
+        (Array.isArray(freelancer.skills) &&
+          freelancer.skills.some((skill) =>
+            skill.toLowerCase().includes(skillFilter.toLowerCase())
+          ));
 
       return matchesSearch && matchesSkill;
     });
@@ -118,19 +138,16 @@ const Freelancers = () => {
     setFilteredFreelancers(filtered);
   };
 
-  if (loading) {
-    return <Loading size="lg" text="Loading freelancers..." fullScreen />;
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="container-custom">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Find Expert Freelancers</h1>
-
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="container mx-auto px-4">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            Find Top Freelancers
+          </h1>
           <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+            <div className="w-full md:w-96 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search by name, title, or description"
@@ -154,9 +171,19 @@ const Freelancers = () => {
           </form>
         </div>
 
-        <div className="space-y-6">
-          {filteredFreelancers.length > 0 ? (
-            filteredFreelancers.map((freelancer) => (
+        {loading ? (
+          <Loading size="lg" text="Loading freelancers..." fullScreen />
+        ) : error ? (
+          <div className="bg-white rounded-xl shadow-sm p-10 text-center">
+            <h3 className="text-lg font-medium text-gray-900">Error</h3>
+            <p className="text-gray-600 mt-1">{error}</p>
+            <Button onClick={() => window.location.reload()} className="mt-4">
+              Try Again
+            </Button>
+          </div>
+        ) : filteredFreelancers.length > 0 ? (
+          <div className="space-y-6">
+            {filteredFreelancers.map((freelancer) => (
               <div key={freelancer.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 border border-gray-100">
                 <div className="flex flex-col md:flex-row">
                   <div className="md:w-1/4 mb-4 md:mb-0 flex justify-center md:justify-start">
@@ -183,14 +210,19 @@ const Freelancers = () => {
                         </div>
                       </div>
                       <div className="mt-4 md:mt-0">
-                        <Button>View Profile</Button>
+                        <Link 
+                          to={`/freelancer/${freelancer.id}`}
+                          className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+                        >
+                          View Profile
+                        </Link>
                       </div>
                     </div>
 
                     <p className="text-gray-600 mb-4">{freelancer.overview}</p>
 
                     <div className="flex flex-wrap gap-2">
-                      {freelancer.skills.map((skill, index) => (
+                      {freelancer.skills && freelancer.skills.map((skill, index) => (
                         <span
                           key={index}
                           className="bg-primary-50 text-primary-700 px-3 py-1 text-sm rounded-full"
@@ -202,18 +234,18 @@ const Freelancers = () => {
                   </div>
                 </div>
               </div>
-            ))
-          ) : (
-            <div className="bg-white rounded-xl shadow-sm p-10 text-center">
-              <h3 className="text-lg font-medium text-gray-900">
-                No freelancers found
-              </h3>
-              <p className="text-gray-600 mt-1">
-                Try adjusting your search criteria or browse all available freelancers.
-              </p>
-            </div>
-          )}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl shadow-sm p-10 text-center">
+            <h3 className="text-lg font-medium text-gray-900">
+              No freelancers found
+            </h3>
+            <p className="text-gray-600 mt-1">
+              Try adjusting your search criteria or browse all available freelancers.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
