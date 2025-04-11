@@ -69,14 +69,14 @@ const Navbar = () => {
               {dropdownOpen && (
                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-2 z-10 border border-gray-100">
                   <Link
-                    to="/for-freelancers"
+                    to="/how-it-works/freelancer"
                     className="block px-4 py-2 text-gray-700 hover:bg-primary-50 hover:text-primary-600"
                     onClick={() => setDropdownOpen(false)}
                   >
                     For Freelancers
                   </Link>
                   <Link
-                    to="/for-businesses"
+                    to="/how-it-works/business"
                     className="block px-4 py-2 text-gray-700 hover:bg-primary-50 hover:text-primary-600"
                     onClick={() => setDropdownOpen(false)}
                   >
@@ -177,7 +177,7 @@ const Navbar = () => {
               {dropdownOpen && (
                 <div className="pl-4 mt-2 space-y-2">
                   <Link
-                    to="/for-freelancers"
+                    to="/how-it-works/freelancer"
                     className="block text-gray-700 hover:text-primary-600"
                     onClick={() => {
                       setDropdownOpen(false);
@@ -187,7 +187,7 @@ const Navbar = () => {
                     For Freelancers
                   </Link>
                   <Link
-                    to="/for-businesses"
+                    to="/how-it-works/business"
                     className="block text-gray-700 hover:text-primary-600"
                     onClick={() => {
                       setDropdownOpen(false);
