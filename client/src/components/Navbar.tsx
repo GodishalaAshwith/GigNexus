@@ -55,7 +55,7 @@ const Navbar = () => {
             )}
             
             {/* Show My Job Postings link only for business users */}
-            {isAuthenticated && user?.role === "business" && (
+            {(!isAuthenticated || user?.role === "business") && (
               <>
                 <Link to="/my-jobs" className="text-gray-700 font-medium hover:text-primary-600 transition-colors">
                   My Job Postings
@@ -80,6 +80,12 @@ const Navbar = () => {
             {isAuthenticated && user?.role === "freelancer" && (
               <Link to="/proposals" className="text-gray-700 font-medium hover:text-primary-600 transition-colors">
                 My Proposals
+              </Link>
+            )}
+
+            {isAuthenticated && user?.role === "freelancer" && (
+              <Link to="/aimatch" className="text-gray-700 font-medium hover:text-primary-600 transition-colors">
+                ✨ AI Match 
               </Link>
             )}
             

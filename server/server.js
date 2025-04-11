@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const passport = require('passport');
+const coverLetterRoutes = require('./routes/coverLetterRoute');
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/jobs', require('./routes/jobs'));
 app.use('/api/proposals', require('./routes/proposals'));
 app.use('/api/payments', require('./routes/payments'));
+app.use('/api/cover-letter', coverLetterRoutes); // ✅ Added route for cover letter generation
 
 const PORT = process.env.PORT || 5002;
 app.listen(PORT, () => {

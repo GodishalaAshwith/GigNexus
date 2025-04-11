@@ -22,6 +22,7 @@ import HowItWorksFreelancer from "@/pages/HowItWorksFreelancer";
 import HowItWorksBusiness from "@/pages/HowItWorksBusiness";
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import Layout from '@/components/Layout';
+import AIMatch from '@/pages/AIMatch';
 
 const queryClient = new QueryClient();
 
@@ -53,6 +54,7 @@ function App() {
                 } 
               />
               <Route path="jobs" element={<Jobs />} />
+              <Route path="aimatch" element={<AIMatch />} />
               <Route path="job/:jobId" element={<JobDetail />} />
               <Route path="freelancers" element={<Freelancers />} />
               <Route path="freelancer/:freelancerId" element={<FreelancerDetail />} />
