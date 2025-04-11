@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { authService } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-hot-toast";
+import Loading from "@/components/ui/loading";
 
 const Dashboard = () => {
   const [user, setUser] = useState<any>(null);
@@ -33,14 +34,7 @@ const Dashboard = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading your dashboard...</p>
-        </div>
-      </div>
-    );
+    return <Loading size="lg" text="Loading your dashboard..." fullScreen />;
   }
 
   return (
