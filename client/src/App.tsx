@@ -15,6 +15,8 @@ import Unauthorized from "@/pages/Unauthorized";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import HowItWorksFreelancer from "@/pages/HowItWorksFreelancer";
+import HowItWorksBusiness from "@/pages/HowItWorksBusiness";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +59,8 @@ const App = () => (
                 } 
               />
               <Route path="/unauthorized" element={<Unauthorized />} />
+              <Route path="/how-it-works/freelancer" element={<HowItWorksFreelancer />} />
+              <Route path="/how-it-works/business" element={<HowItWorksBusiness />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>
