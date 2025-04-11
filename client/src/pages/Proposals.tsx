@@ -1,274 +1,190 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "react-hot-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { proposalService } from "@/services/api";
-import Loading from "@/components/ui/loading";
-import { formatDistanceToNow } from "date-fns";
-import { Link } from "react-router-dom";
+import { Loader2, ExternalLink } from "lucide-react";
 
 interface Proposal {
   _id: string;
-  id: string;
-  jobId: string | {
+  jobId: {
     _id: string;
     title: string;
     description: string;
     budget: {
-      type: 'fixed' | 'hourly';
+      type: string;
       min: number;
       max: number;
     };
-    businessId: {
-      profile: {
-        companyName: string;
-      };
-    };
+    status: string;
   };
-  jobTitle: string;
-  companyName: string;
   coverLetter: string;
-  proposedRate: number;
   bidAmount: number;
-  estimatedDuration: string | {
-    value: number;
-    unit: 'hours' | 'days' | 'weeks' | 'months';
-  };
   status: 'pending' | 'accepted' | 'rejected' | 'withdrawn';
-  submittedAt: string;
   createdAt: string;
-  freelancerId?: {
-    profile: {
-      name: string;
-      avatar: string;
-      skills: string[];
-      hourlyRate: number;
-    };
+  estimatedDuration: {
+    value: number;
+    unit: string;
   };
 }
 
 const Proposals = () => {
-  const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const [activeTab, setActiveTab] = useState("all");
+  const { user, isAuthenticated, loading } = useAuth();
   const [proposals, setProposals] = useState<Proposal[]>([]);
-  const [loading, setLoading] = useState(true);
-  const isReceived = location.pathname === "/proposals/received";
+  const [pageLoading, setPageLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProposals = async () => {
-      try {
-        setLoading(true);
-        let data;
-        if (isReceived) {
-          data = await proposalService.getReceivedProposals();
-        } else {
-          data = await proposalService.getMyProposals();
-        }
-        setProposals(data);
-      } catch (error) {
-        console.error("Error fetching proposals:", error);
-        toast.error("Failed to load proposals");
-      } finally {
-        setLoading(false);
+    // Check if user is authenticated and is a freelancer
+    if (!loading) {
+      if (!isAuthenticated) {
+        toast.error("Please login to access this page");
+        navigate("/login");
+        return;
       }
-    };
 
-    if (isAuthenticated && (user?.role === "freelancer" || (user?.role === "business" && isReceived))) {
+      if (user?.role !== "freelancer") {
+        toast.error("Access denied. This page is only for freelancer accounts.");
+        navigate("/unauthorized");
+        return;
+      }
+
       fetchProposals();
-    } else {
-      navigate("/unauthorized");
     }
-  }, [isAuthenticated, user, navigate, isReceived]);
+  }, [loading, isAuthenticated, user, navigate]);
+
+  const fetchProposals = async () => {
+    try {
+      const response = await proposalService.getMyProposals();
+      setProposals(response.proposals || []);
+    } catch (error) {
+      console.error("Error fetching proposals:", error);
+      toast.error("Failed to load proposals");
+    } finally {
+      setPageLoading(false);
+    }
+  };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "accepted":
-        return "bg-green-100 text-green-800";
-      case "rejected":
-        return "bg-red-100 text-red-800";
-      case "withdrawn":
-        return "bg-gray-100 text-gray-800";
+    switch (status.toLowerCase()) {
+      case 'accepted':
+        return 'bg-green-100 text-green-800';
+      case 'rejected':
+        return 'bg-red-100 text-red-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'withdrawn':
+        return 'bg-gray-100 text-gray-800';
       default:
-        return "bg-gray-100 text-gray-800";
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const filteredProposals = activeTab === "all" 
-    ? proposals 
-    : proposals.filter(proposal => proposal.status === activeTab);
-
-  const withdrawProposal = async (id: string) => {
-    try {
-      await proposalService.withdrawProposal(id);
-      setProposals(proposals.filter(proposal => proposal.id !== id && proposal._id !== id));
-      toast.success("Proposal withdrawn successfully");
-    } catch (error) {
-      console.error("Error withdrawing proposal:", error);
-      toast.error("Failed to withdraw proposal");
-    }
-  };
-
-  const handleUpdateStatus = async (proposalId: string, status: 'accepted' | 'rejected') => {
-    try {
-      await proposalService.updateProposalStatus(proposalId, status);
-      toast.success(`Proposal ${status}`);
-      
-      // Update the status in the local state
-      setProposals(proposals.map(proposal => 
-        (proposal.id === proposalId || proposal._id === proposalId) 
-          ? { ...proposal, status } 
-          : proposal
-      ));
-    } catch (error) {
-      console.error('Error updating proposal:', error);
-      toast.error('Failed to update proposal');
-    }
-  };
-
-  if (loading) {
-    return <Loading size="lg" text="Loading proposals..." fullScreen />;
+  if (loading || pageLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">
-          {isReceived ? "Received Proposals" : "My Proposals"}
-        </h1>
-        
-        {!isReceived && (
-          <Tabs defaultValue="all" className="w-full" onValueChange={setActiveTab}>
-            <div className="flex justify-between items-center mb-6">
-              <TabsList>
-                <TabsTrigger value="all">All Proposals</TabsTrigger>
-                <TabsTrigger value="pending">Pending</TabsTrigger>
-                <TabsTrigger value="accepted">Accepted</TabsTrigger>
-                <TabsTrigger value="rejected">Rejected</TabsTrigger>
-                <TabsTrigger value="withdrawn">Withdrawn</TabsTrigger>
-              </TabsList>
-            </div>
-          </Tabs>
-        )}
-        
+      <div className="max-w-5xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">My Proposals</h1>
+          <Button onClick={() => navigate('/jobs')}>
+            Browse More Jobs
+          </Button>
+        </div>
+
         {proposals.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-md p-8 text-center">
-            <h2 className="text-xl font-semibold mb-2">No proposals found</h2>
-            <p className="text-gray-500 mb-6">
-              {isReceived 
-                ? "You haven't received any proposals yet." 
-                : "You haven't submitted any proposals yet."}
-            </p>
-            {!isReceived && (
-              <Button asChild>
-                <Link to="/jobs">Browse Jobs</Link>
-              </Button>
-            )}
-          </div>
+          <Card className="p-6 text-center">
+            <h3 className="text-lg font-medium mb-2">No Proposals Yet</h3>
+            <p className="text-gray-600 mb-4">Start applying to jobs to see your proposals here</p>
+            <Button onClick={() => navigate('/jobs')}>
+              Browse Jobs
+            </Button>
+          </Card>
         ) : (
-          <div className="space-y-6">
-            {filteredProposals.map((proposal) => {
-              const jobId = typeof proposal.jobId === 'object' ? proposal.jobId._id : proposal.jobId;
-              const jobTitle = typeof proposal.jobId === 'object' ? proposal.jobId.title : proposal.jobTitle;
-              const companyName = typeof proposal.jobId === 'object' 
-                ? proposal.jobId.businessId.profile.companyName 
-                : proposal.companyName;
-              
-              return (
-                <Card key={proposal._id || proposal.id} className="overflow-hidden">
-                  <CardHeader className="pb-4">
-                    <div className="flex justify-between items-start">
+          <div className="space-y-4">
+            {proposals.map((proposal) => (
+              <Card key={proposal._id} className="p-6">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex justify-between items-start mb-4">
                       <div>
-                        <CardTitle className="text-xl">
-                          <Link to={`/job/${jobId}`} className="text-blue-600 hover:underline">
-                            {jobTitle}
-                          </Link>
-                        </CardTitle>
-                        <CardDescription className="mt-1">
-                          {companyName} • Submitted {proposal.submittedAt 
-                            ? formatDate(proposal.submittedAt) 
-                            : formatDistanceToNow(new Date(proposal.createdAt), { addSuffix: true })}
-                        </CardDescription>
-                      </div>
-                      <Badge className={getStatusColor(proposal.status)}>
-                        {proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1)}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pb-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <p className="text-sm text-gray-500">Proposed Rate</p>
-                        <p className="font-medium">${proposal.proposedRate || proposal.bidAmount}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Estimated Duration</p>
-                        <p className="font-medium">
-                          {typeof proposal.estimatedDuration === 'object' 
-                            ? `${proposal.estimatedDuration.value} ${proposal.estimatedDuration.unit}` 
-                            : proposal.estimatedDuration}
+                        <h3 className="text-xl font-semibold mb-2">
+                          {proposal.jobId.title}
+                        </h3>
+                        <p className="text-gray-600 line-clamp-2 mb-2">
+                          {proposal.jobId.description}
                         </p>
                       </div>
+                      <Badge className={getStatusColor(proposal.status)}>
+                        {proposal.status}
+                      </Badge>
                     </div>
-                    <Separator className="my-4" />
-                    <div>
-                      <p className="text-sm text-gray-500 mb-2">Cover Letter</p>
-                      <p className="text-gray-700 whitespace-pre-line">{proposal.coverLetter}</p>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="pt-0">
-                    {isReceived ? (
-                      <div className="flex gap-2">
-                        {proposal.status === 'pending' && (
-                          <>
-                            <Button 
-                              onClick={() => handleUpdateStatus(proposal._id || proposal.id, 'accepted')}
-                              className="bg-green-600 hover:bg-green-700"
-                            >
-                              Accept
-                            </Button>
-                            <Button 
-                              onClick={() => handleUpdateStatus(proposal._id || proposal.id, 'rejected')}
-                              variant="outline" 
-                              className="text-red-600 border-red-600 hover:bg-red-50"
-                            >
-                              Decline
-                            </Button>
-                          </>
-                        )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 mb-4">
+                      <div>
+                        <span className="font-medium">Your Bid:</span>{' '}
+                        ${proposal.bidAmount}
                       </div>
-                    ) : (
-                      proposal.status === "pending" && (
-                        <Button 
-                          variant="outline" 
-                          className="text-red-600 border-red-600 hover:bg-red-50"
-                          onClick={() => withdrawProposal(proposal._id || proposal.id)}
+                      <div>
+                        <span className="font-medium">Job Budget:</span>{' '}
+                        {proposal.jobId.budget.type === 'fixed' 
+                          ? `$${proposal.jobId.budget.min}`
+                          : `$${proposal.jobId.budget.min}-$${proposal.jobId.budget.max}/hr`}
+                      </div>
+                      <div>
+                        <span className="font-medium">Submitted:</span>{' '}
+                        {formatDate(proposal.createdAt)}
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-50 p-4 rounded-md mb-4">
+                      <h4 className="font-medium mb-2">Your Cover Letter:</h4>
+                      <p className="text-gray-700">{proposal.coverLetter}</p>
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/job/${proposal.jobId._id}`)}
+                      >
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        View Job
+                      </Button>
+                      {proposal.status === 'pending' && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => {
+                            // Add withdraw functionality
+                            toast.error("Withdraw functionality coming soon");
+                          }}
                         >
                           Withdraw Proposal
                         </Button>
-                      )
-                    )}
-                  </CardFooter>
-                </Card>
-              );
-            })}
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
           </div>
         )}
       </div>

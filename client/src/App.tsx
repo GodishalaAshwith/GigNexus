@@ -1,9 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster as UIToaster } from "@/components/ui/toaster";
-import { Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/sonner";
 
 import Home from '@/pages/Home';
 import Login from '@/pages/Login';
@@ -23,6 +21,7 @@ import HowItWorksFreelancer from "@/pages/HowItWorksFreelancer";
 import HowItWorksBusiness from "@/pages/HowItWorksBusiness";
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import Layout from '@/components/Layout';
+import InterviewQuestions from '@/pages/InterviewQuestions';
 
 const queryClient = new QueryClient();
 
@@ -30,9 +29,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <UIToaster />
-        <Toaster position="top-center" />
-        <Sonner />
+        <Toaster />
         <Router>
           <Routes>
             <Route element={<Layout />}>
@@ -107,6 +104,9 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
+
+              {/* Add this to your existing routes */}
+              <Route path="/jobs/:jobId/interview-questions" element={<InterviewQuestions />} />
 
               {/* 404 route */}
               <Route path="*" element={<NotFound />} />

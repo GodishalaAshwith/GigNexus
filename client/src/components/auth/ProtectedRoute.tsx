@@ -28,6 +28,14 @@ export const ProtectedRoute = ({
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Add console logs for debugging
+    console.log('Protected Route Debug:', {
+      isAuthenticated,
+      userRole: user?.role,
+      allowedRoles,
+      loading
+    });
+
     // If route requires specific roles and user doesn't have them, show toast message
     if (!loading && isAuthenticated && allowedRoles.length > 0 && user && !allowedRoles.includes(user.role)) {
       toast.error(`Access denied. This page is only for ${allowedRoles.join(' or ')} accounts.`);

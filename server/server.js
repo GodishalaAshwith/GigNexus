@@ -26,7 +26,23 @@ app.use('/api/jobs', require('./routes/jobs'));
 app.use('/api/proposals', require('./routes/proposals'));
 app.use('/api/payments', require('./routes/payments'));
 
-const PORT = process.env.PORT || 5002;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+const PORT = process.env.PORT || 5001;
+
+const startServer = async () => {
+  try {
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  } catch (error) {
+    if (error.code === 'EADDRINUSE') {
+      console.log(`Port ${PORT} is busy, trying ${PORT + 1}...`);
+      app.listen(PORT + 1, () => {
+        console.log(`Server is running on port ${PORT + 1}`);
+      });
+    } else {
+      console.error('Error starting server:', error);
+    }
+  }
+};
+
+startServer();

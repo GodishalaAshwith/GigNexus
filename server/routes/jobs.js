@@ -128,4 +128,46 @@ router.patch('/:id/status', auth, async (req, res) => {
   }
 });
 
+// Get my jobs
+router.get('/my-jobs', auth, async (req, res) => {
+  try {
+    // Verify user is a business
+    if (req.user.role !== 'business') {
+      return res.status(403).json({ message: 'Access denied. Business accounts only.' });
+    }
+
+    const jobs = await Job.find({ businessId: req.user.id })
+      .sort({ createdAt: -1 })
+      .populate('proposals', 'freelancerId status')
+      .exec();
+
+    res.json({ success: true, jobs });
+  } catch (error) {
+    console.error('Error fetching my jobs:', error);
+    res.status(500).json({ message: 'Error fetching jobs' });
+  }
+});
+
+// Delete job
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id);
+
+    if (!job) {
+      return res.status(404).json({ message: 'Job not found' });
+    }
+
+    // Ensure the user owns the job
+    if (job.businessId.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    await job.remove();
+    res.json({ success: true, message: 'Job deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting job:', error);
+    res.status(500).json({ message: 'Error deleting job' });
+  }
+});
+
 module.exports = router;

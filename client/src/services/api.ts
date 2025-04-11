@@ -145,12 +145,20 @@ export const jobService = {
     }
   },
 
-  deleteJob: async (id: string) => {
+  getMyJobs: async () => {
     try {
-      const response = await api.delete(`/jobs/${id}`);
+      const response = await api.get('/jobs/my-jobs');
       return response.data;
     } catch (error) {
-      console.error('Delete job error:', error);
+      throw error;
+    }
+  },
+
+  deleteJob: async (jobId: string) => {
+    try {
+      const response = await api.delete(`/jobs/${jobId}`);
+      return response.data;
+    } catch (error) {
       throw error;
     }
   },
@@ -158,13 +166,29 @@ export const jobService = {
 
 // Proposal services
 export const proposalService = {
-  // Submit a new proposal
+  getMyProposals: async () => {
+    try {
+      const response = await api.get('/proposals/my-proposals');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   submitProposal: async (proposalData: any) => {
     try {
       const response = await api.post('/proposals', proposalData);
       return response.data;
     } catch (error) {
-      console.error('Submit proposal error:', error);
+      throw error;
+    }
+  },
+
+  withdrawProposal: async (proposalId: string) => {
+    try {
+      const response = await api.patch(`/proposals/${proposalId}/withdraw`);
+      return response.data;
+    } catch (error) {
       throw error;
     }
   },
@@ -180,17 +204,6 @@ export const proposalService = {
     }
   },
 
-  // Get all proposals submitted by the current freelancer
-  getMyProposals: async () => {
-    try {
-      const response = await api.get('/proposals/my');
-      return response.data;
-    } catch (error) {
-      console.error('Get my proposals error:', error);
-      throw error;
-    }
-  },
-  
   // Get all proposals received by the current business
   getReceivedProposals: async () => {
     try {
@@ -209,17 +222,6 @@ export const proposalService = {
       return response.data;
     } catch (error) {
       console.error('Update proposal status error:', error);
-      throw error;
-    }
-  },
-
-  // Withdraw proposal
-  withdrawProposal: async (id: string) => {
-    try {
-      const response = await api.put(`/proposals/${id}/withdraw`);
-      return response.data;
-    } catch (error) {
-      console.error('Withdraw proposal error:', error);
       throw error;
     }
   },
@@ -263,6 +265,18 @@ export const freelancerService = {
       return response.data;
     } catch (error) {
       console.error('Hire freelancer error:', error);
+      throw error;
+    }
+  }
+};
+
+// Interview question generation service
+export const interviewService = {
+  generateQuestions: async (jobId: string) => {
+    try {
+      const response = await api.post(`/api/interview/generate/${jobId}`);
+      return response.data;
+    } catch (error) {
       throw error;
     }
   }

@@ -271,6 +271,14 @@ const JobDetail = () => {
                   </Button>
                 )
               )}
+              {user?.role === 'business' && (
+                <Button
+                  onClick={() => navigate(`/jobs/${jobId}/interview-questions`)}
+                  className="ml-4"
+                >
+                  Generate Interview Questions
+                </Button>
+              )}
             </div>
           </div>
           
