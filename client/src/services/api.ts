@@ -65,6 +65,17 @@ export const authService = {
       throw error;
     }
   },
+
+  updateProfile: async (profileData: any) => {
+    const response = await axios.put('/api/users/profile', profileData, {
+      headers: {
+        'x-auth-token': localStorage.getItem('token')
+      }
+    });
+    return response.data;
+  }
+
+
 };
 
 // Job services
@@ -102,6 +113,7 @@ export const jobService = {
 
 // Proposal services
 export const proposalService = {
+  // Submit a new proposal
   submitProposal: async (proposalData: any) => {
     try {
       const response = await api.post('/proposals', proposalData);
@@ -112,6 +124,7 @@ export const proposalService = {
     }
   },
 
+  // Get proposals for a specific job
   getProposalsForJob: async (jobId: string) => {
     try {
       const response = await api.get(`/proposals/job/${jobId}`);
@@ -122,15 +135,27 @@ export const proposalService = {
     }
   },
 
-  updateProposalStatus: async (id: string, status: string) => {
+  // Get all proposals submitted by the current freelancer
+  getMyProposals: async () => {
     try {
-      const response = await api.patch(`/proposals/${id}/status`, { status });
+      const response = await api.get('/proposals/my');
       return response.data;
     } catch (error) {
-      console.error('Update proposal error:', error);
+      console.error('Get my proposals error:', error);
       throw error;
     }
   },
+
+  // Update proposal status (for businesses)
+  updateProposalStatus: async (proposalId: string, status: string) => {
+    try {
+      const response = await api.patch(`/proposals/${proposalId}/status`, { status });
+      return response.data;
+    } catch (error) {
+      console.error('Update proposal status error:', error);
+      throw error;
+    }
+  }
 };
 
 export default api;
