@@ -1,17 +1,34 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Github, Linkedin } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { authService } from "@/services/api";
+import { toast } from "react-hot-toast";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Handle login logic
-    console.log("Login attempt with:", { email, password });
+    setIsLoading(true);
+    
+    try {
+      await authService.login(email, password);
+      toast.success("Login successful!");
+      navigate("/dashboard");
+    } catch (error: any) {
+      console.error("Login error:", error);
+      toast.error(error.response?.data?.msg || "Login failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleOAuthLogin = (provider: string) => {
+    window.location.href = `http://localhost:5001/api/auth/${provider}`;
   };
 
   return (
@@ -51,8 +68,8 @@ const LoginForm = () => {
         />
       </div>
 
-      <Button type="submit" className="w-full">
-        Sign In
+      <Button type="submit" className="w-full" disabled={isLoading}>
+        {isLoading ? "Signing in..." : "Sign In"}
       </Button>
 
       <div className="relative flex items-center justify-center text-xs uppercase text-gray-500 my-6">
@@ -61,11 +78,21 @@ const LoginForm = () => {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <Button variant="outline" type="button" className="w-full flex items-center justify-center gap-2">
+        <Button 
+          variant="outline" 
+          type="button" 
+          className="w-full flex items-center justify-center gap-2"
+          onClick={() => handleOAuthLogin("github")}
+        >
           <Github className="h-4 w-4" />
           Github
         </Button>
-        <Button variant="outline" type="button" className="w-full flex items-center justify-center gap-2">
+        <Button 
+          variant="outline" 
+          type="button" 
+          className="w-full flex items-center justify-center gap-2"
+          onClick={() => handleOAuthLogin("linkedin")}
+        >
           <Linkedin className="h-4 w-4" />
           LinkedIn
         </Button>
