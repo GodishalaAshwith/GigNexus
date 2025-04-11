@@ -11,10 +11,10 @@ import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import Dashboard from "@/pages/Dashboard";
 import NotFound from "@/pages/NotFound";
+import Unauthorized from "@/pages/Unauthorized";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import Profile from "@/pages/Profile";
-import Proposals from "@/pages/Proposals";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -34,9 +34,6 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/profile" element={<Profile />} />
-              {/* <Route path="/proposals" element={<Proposals />} /> */}
-              <Route path="/proposals/received" element={<Proposals />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>
